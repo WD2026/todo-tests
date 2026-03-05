@@ -38,6 +38,7 @@ def test_create_todo(client):
     assert location is not None
     # Location should be a relative URL and inside the API root path
     assert location.startswith(f"{ROOT_PATH}/todos/")
+    # The todo id should be last element in the location
     todo_id = location.rstrip("/").rsplit("/", 1)[-1]
     
     # Get the todo
@@ -48,9 +49,8 @@ def test_create_todo(client):
     assert isinstance(todo, dict)
     assert str(todo.get("id")) == todo_id
     assert todo.get("text") == new_todo["text"]
-
-    global known_todo_ids
-    known_todo_ids.append(todo["id"])
+    # Clean-up: Remove it (requires a working DELETE endpoint)
+    client.delete(location)
 
 
 #@pytest.mark.skipif(not known_todo_ids, reason="No known todo IDs to test for")
@@ -68,8 +68,8 @@ def test_get_todo_by_id(client):
 
 
 def test_get_nonexistent_todo(client):
-    """GET {ROOT_PATH}/todos/9999 should return 404 for non-existent todo."""
-    todo_id = 9999
+    """GET {ROOT_PATH}/todos/98989 should return 404 for non-existent todo."""
+    todo_id = 98989
     while str(todo_id) in known_todo_ids:
         todo_id += 1
     response = client.get(f"{ROOT_PATH}/todos/{todo_id}")
@@ -79,7 +79,7 @@ def test_get_nonexistent_todo(client):
 def test_delete_todo(client):
     """DELETE {ROOT_PATH}/todos/{id} should delete the todo and return 200 or 204."""
     # First create a new todo to delete
-    new_todo = {"text": f"Todo to delete {now()}", "done": False}
+    new_todo = {"text": f"Test Todo to delete {now()}", "done": False}
     response = client.post(f"{ROOT_PATH}/todos", json=new_todo)
     assert response.status_code == 201
     location = response.headers.get("location")
