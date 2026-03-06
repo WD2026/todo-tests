@@ -53,9 +53,10 @@ def test_create_todo(client):
     client.delete(location)
 
 
-#@pytest.mark.skipif(not known_todo_ids, reason="No known todo IDs to test for")
 def test_get_todo_by_id(client):
     """GET {ROOT_PATH}/todos/{id} should return a JSON object for todo with known id."""
+    if not known_todo_ids:
+        pytest.skip("No known todo IDs to test for")
     todo_id = known_todo_ids[0]
     response = client.get(f"{ROOT_PATH}/todos/{todo_id}")
     assert response.status_code == 200
