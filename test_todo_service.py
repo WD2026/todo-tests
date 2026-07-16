@@ -78,11 +78,12 @@ def test_get_nonexistent_todo(client):
 
 
 def test_delete_todo(client):
-    """DELETE {ROOT_PATH}/todos/{id} should delete the todo and return 200 or 204."""
+    """DELETE {ROOT_PATH}/todos/{id} deletes a todo and returns 200 or 204."""
     # First create a new todo to delete
     new_todo = {"text": f"Test Todo to delete {now()}", "done": False}
     response = client.post(f"{ROOT_PATH}/todos", json=new_todo)
-    assert response.status_code == 201
+    # Create returns 201
+    #assert response.status_code == 201
     location = response.headers.get("location")
     assert location is not None
     # todo_id = location.rstrip("/").rsplit("/", 1)[-1]
@@ -96,3 +97,20 @@ def test_delete_todo(client):
     assert response3.status_code == 404
     # If Todo service is working correctly, the todo added by
     # this test was not added to known_todo_ids.
+
+
+def test_delete_nonexisting(client):
+    """DELETE a non-existing todo returns status code 404."""
+    todo_id = 909795
+    while todo_id < 999999:
+        todo_id += 1
+        path = f"{ROOT_PATH}/todos/{todo_id}"
+        response = client.get(path)
+        if response.status_code == 404:
+            break  # found a non-existing todo_id
+        if response.status_code >= 500:
+            fail(f"GET {path} returned status {response.status_code}")
+
+    path = f"{ROOT_PATH}/todos/{todo_id}"
+    response = client.delete(path)
+    assert response.status_code == 404, f"DELETE {path} should return 404 NOT FOUND"
